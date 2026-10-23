@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import TaskForm from './TaskForm.jsx';
-import { fmt, fmtDuration, isOverdue, STATUS, PRIORITY } from './utils.js';
+import TaskDetail from './TaskDetail.jsx';
+import { fmt, fmtDuration, isOverdue, subProgress, STATUS, PRIORITY } from './utils.js';
 
 const COLUMNS = ['todo', 'in-progress', 'done'];
 
@@ -10,6 +11,7 @@ export default function Board() {
   const [dragId, setDragId] = useState(null);
   const [overCol, setOverCol] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [detailId, setDetailId] = useState(null);
   const [error, setError] = useState('');
 
   const load = useCallback(() => api.list().then(setTasks).catch((e) => setError(e.message)), []);
@@ -66,10 +68,11 @@ export default function Board() {
                       {t.category && <span className="badge">{t.category}</span>}
                       {late && <span className="badge late-tag">Overdue</span>}
                     </div>
-                    <button className="kc-title" onClick={() => setEditing(t)}>{t.title}</button>
+                    <button className="kc-title" onClick={() => setDetailId(t._id)}>{t.title}</button>
                     <div className={`kc-foot ${late ? 'overdue-text' : ''}`}>
                       <span>Due {fmt(t.dueDate)}</span>
                       {t.estimatedMinutes && <span>Est. {fmtDuration(t.estimatedMinutes)}</span>}
+                      {subProgress(t) && <span>Subtasks {subProgress(t)}</span>}
                     </div>
                     {/* Keyboard and touch alternative to dragging */}
                     <select value={t.status} onChange={(e) => move(t._id, e.target.value)} aria-label={`Move ${t.title} to another column`}>
@@ -83,6 +86,7 @@ export default function Board() {
         })}
       </div>
 
+      {detailId && <TaskDetail id={detailId} onClose={() => setDetailId(null)} onChanged={load} onEdit={(t) => { setDetailId(null); setEditing(t); }} />}
       {editing && (
         <TaskForm task={editing === 'new' ? null : editing} onClose={() => setEditing(null)}
           onSave={async (body) => { await (editing === 'new' ? api.create(body) : api.update(editing._id, body)); await load(); }} />

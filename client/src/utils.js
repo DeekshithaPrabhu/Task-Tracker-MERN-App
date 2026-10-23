@@ -19,3 +19,5 @@ export const applyTheme = (t = 'system') => {
   if (t === 'system') delete el.dataset.theme; else el.dataset.theme = t;
   try { localStorage.setItem('theme', t); } catch { /* storage unavailable */ }
 };
+
+export const subProgress = (t) => (t.subtasks?.length ? `${t.subtasks.filter((s) => s.done).length}/${t.subtasks.length}` : '');

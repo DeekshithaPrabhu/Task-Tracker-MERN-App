@@ -17,4 +17,10 @@
 - `/api/tasks`: list/filter/sort (`q, status, priority, category, tag, dueFrom, dueTo, quick, sort, order`), `/stats`, `/tags`, create, update, `/:id/extend`, delete
 - `/api/categories`: list, create, rename (updates tasks), delete (tasks become uncategorised)
 
-Tasks created before accounts existed have no owner and won't appear for anyone.
+
+
+## Task details, reminders, bulk actions
+- Click a task title (list or board) to open details: subtasks checklist, comments, and a history of status/field edits and subtask changes.
+- Reminders (bell in the top bar) are computed from open tasks: overdue, due today, due in the next 2 days. They refresh every minute; `+1d` snoozes a task.
+- On All tasks, tick tasks to complete, change status/priority/category/due date, or delete them in one go. Bulk updates are all-or-nothing.
+- Extra API: `GET /api/tasks/:id`, `/:id/subtasks`, `/:id/activity`, `/:id/comments`, `PATCH /api/tasks/bulk`, `POST /api/tasks/bulk/delete`, `GET /api/notifications`.

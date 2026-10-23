@@ -29,6 +29,17 @@ export const api = {
   extend: (id, days) => patch(`/tasks/${id}/extend`, { days }),
   remove: (id) => request(`/tasks/${id}`, { method: 'DELETE' }),
 
+  task: (id) => request(`/tasks/${id}`),
+  addSubtask: (id, title) => post(`/tasks/${id}/subtasks`, { title }),
+  updateSubtask: (id, sid, b) => patch(`/tasks/${id}/subtasks/${sid}`, b),
+  deleteSubtask: (id, sid) => request(`/tasks/${id}/subtasks/${sid}`, { method: 'DELETE' }),
+  activity: (id) => request(`/tasks/${id}/activity`),
+  addComment: (id, text) => post(`/tasks/${id}/comments`, { text }),
+  deleteComment: (id, cid) => request(`/tasks/${id}/comments/${cid}`, { method: 'DELETE' }),
+  bulk: (ids, update) => patch('/tasks/bulk', { ids, update }),
+  bulkDelete: (ids) => post('/tasks/bulk/delete', { ids }),
+  notifications: () => request('/notifications'),
+
   categories: () => request('/categories'),
   addCategory: (name) => post('/categories', { name }),
   renameCategory: (id, name) => patch(`/categories/${id}`, { name }),

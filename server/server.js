@@ -6,6 +6,7 @@ import 'dotenv/config';
 import auth from './routes/auth.js';
 import tasks from './routes/tasks.js';
 import categories from './routes/categories.js';
+import notifications from './routes/notifications.js';
 import { requireAuth } from './middleware/auth.js';
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required (see server/.env.example)');
@@ -18,6 +19,7 @@ app.use(cookieParser());
 app.use('/api/auth', auth);
 app.use('/api/tasks', requireAuth, tasks);
 app.use('/api/categories', requireAuth, categories);
+app.use('/api/notifications', requireAuth, notifications);
 
 app.use((err, _req, res, _next) => {
   if (err.code === 11000) return res.status(409).json({ message: 'That already exists' });
