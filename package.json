@@ -1,9 +1,18 @@
 {
-  "name": "taskflow",
-  "private": true,
+  "name": "taskflow-server",
+  "type": "module",
   "scripts": {
-    "install:all": "npm i && npm i --prefix server && npm i --prefix client",
-    "dev": "concurrently -n api,web \"npm run dev --prefix server\" \"npm run dev --prefix client\""
+    "dev": "node --watch server.js",
+    "start": "node server.js"
   },
-  "devDependencies": { "concurrently": "^8.2.2" }
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.4.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express-rate-limit": "^7.3.1",
+    "jsonwebtoken": "^9.0.2"
+  }
 }
