@@ -64,3 +64,29 @@ ul { list-style: none; margin: 0; padding: 0; }
   .cards { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .ring-fg { transition: none; } }
+
+/* Navigation + task management */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.tabs button { background: none; border: 0; padding: 8px 14px; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; }
+.tabs button.on { color: var(--ink); border-color: var(--accent); }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
+.toolbar input, .toolbar select, .modal textarea { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+.toolbar input { flex: 1; min-width: 180px; }
+.modal textarea { background: var(--bg); resize: vertical; }
+.list { display: grid; gap: 10px; }
+.item { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.item.late { box-shadow: inset 3px 0 var(--late); }
+.item-main { flex: 1; min-width: 220px; }
+.desc { margin: 2px 0 6px; color: var(--muted); white-space: pre-wrap; }
+.meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: .88rem; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; color: var(--ink); }
+.badge .dot { margin-right: 6px; }
+.s-done { color: var(--done); border-color: var(--done); } .s-in-progress { color: var(--accent); border-color: var(--accent); }
+.overdue-text { color: var(--late); font-weight: 600; }
+.item-actions { display: flex; gap: 6px; align-items: flex-start; }
+.item-actions button { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 6px; padding: 5px 10px; }
+.item-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.item-actions .danger:hover, .danger { color: var(--late); border-color: var(--late); }
+.danger-fill { background: var(--late); }
+.p-urgent { background: #8e1b3a; } .b-urgent { background: #8e1b3a; }
+@media (prefers-color-scheme: dark) { .p-urgent, .b-urgent { background: #ff5c8a; } }

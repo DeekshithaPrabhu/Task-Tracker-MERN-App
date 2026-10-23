@@ -1,0 +1,81 @@
+import { useEffect, useState, useCallback } from 'react';
+import { api } from './api.js';
+import TaskForm from './TaskForm.jsx';
+import { fmt, fmtDuration, isOverdue, STATUS, PRIORITY } from './utils.js';
+
+export default function Tasks() {
+  const [tasks, setTasks] = useState(null);
+  const [filters, setFilters] = useState({ q: '', status: '', priority: '' });
+  const [editing, setEditing] = useState(null); // a task, 'new', or null
+  const [deleting, setDeleting] = useState(null);
+  const [error, setError] = useState('');
+
+  const load = useCallback(() => api.list(filters).then(setTasks).catch((e) => setError(e.message)), [filters]);
+  useEffect(() => { const id = setTimeout(load, 200); return () => clearTimeout(id); }, [load]);
+
+  const act = (fn) => async () => { try { await fn(); await load(); } catch (e) { setError(e.message); } };
+  const save = async (body) => { await (editing === 'new' ? api.create(body) : api.update(editing._id, body)); await load(); };
+  const setF = (k) => (e) => setFilters({ ...filters, [k]: e.target.value });
+
+  return (
+    <>
+      <header className="top">
+        <h1>All tasks</h1>
+        <button className="primary" onClick={() => setEditing('new')}>New task</button>
+      </header>
+      <div className="toolbar">
+        <input type="search" placeholder="Search by title" value={filters.q} onChange={setF('q')} aria-label="Search tasks" />
+        <select value={filters.status} onChange={setF('status')} aria-label="Filter by status">
+          <option value="">All statuses</option>
+          {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select value={filters.priority} onChange={setF('priority')} aria-label="Filter by priority">
+          <option value="">All priorities</option>
+          {Object.entries(PRIORITY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
+      {error && <p className="err" onClick={() => setError('')}>{error}</p>}
+
+      <ul className="list">
+        {tasks === null && <p className="empty">Loading tasks…</p>}
+        {tasks?.length === 0 && <p className="empty">No tasks match. Create one with “New task”.</p>}
+        {tasks?.map((t) => (
+          <li key={t._id} className={`panel item ${isOverdue(t) ? 'late' : ''}`}>
+            <div className="item-main">
+              <strong className={t.status === 'done' ? 'struck' : ''}>{t.title}</strong>
+              {t.description && <p className="desc">{t.description}</p>}
+              <div className="meta">
+                <span className={`badge s-${t.status}`}>{STATUS[t.status]}</span>
+                <span className="badge"><i className={`dot p-${t.priority}`} />{PRIORITY[t.priority]}</span>
+                {t.startDate && <span>Starts {fmt(t.startDate)}</span>}
+                <span className={isOverdue(t) ? 'overdue-text' : ''}>Due {fmt(t.dueDate)}{isOverdue(t) && ' (overdue)'}</span>
+                {t.estimatedMinutes && <span>Est. {fmtDuration(t.estimatedMinutes)}</span>}
+              </div>
+            </div>
+            <div className="item-actions">
+              <button onClick={act(() => api.update(t._id, { status: t.status === 'done' ? 'todo' : 'done' }))}>
+                {t.status === 'done' ? 'Reopen' : 'Mark complete'}
+              </button>
+              <button onClick={() => setEditing(t)}>Edit</button>
+              <button className="danger" onClick={() => setDeleting(t)}>Delete</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {editing && <TaskForm task={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSave={save} />}
+      {deleting && (
+        <div className="overlay" onClick={() => setDeleting(null)}>
+          <div className="modal" role="alertdialog" aria-labelledby="del-h" onClick={(e) => e.stopPropagation()}>
+            <h2 id="del-h">Delete this task?</h2>
+            <p>“{deleting.title}” will be permanently removed. This can't be undone.</p>
+            <div className="actions">
+              <button className="ghost" autoFocus onClick={() => setDeleting(null)}>Keep task</button>
+              <button className="primary danger-fill" onClick={act(async () => { await api.remove(deleting._id); setDeleting(null); })}>Delete task</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

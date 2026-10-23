@@ -31,7 +31,14 @@ r.get('/stats', wrap(async (_req, res) => {
   });
 }));
 
-r.get('/', wrap(async (_req, res) => res.json(await Task.find().sort('dueDate'))));
+r.get('/', wrap(async (req, res) => {
+  const { q, status, priority } = req.query;
+  const filter = {};
+  if (status) filter.status = status;
+  if (priority) filter.priority = priority;
+  if (q) filter.title = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+  res.json(await Task.find(filter).sort('dueDate'));
+}));
 r.post('/', wrap(async (req, res) => res.status(201).json(await Task.create(req.body))));
 
 r.patch('/:id', wrap(async (req, res) => {
