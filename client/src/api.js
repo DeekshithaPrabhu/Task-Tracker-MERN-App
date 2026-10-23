@@ -9,6 +9,7 @@ const call = async (url, opts = {}) => {
 
 export const api = {
   stats: () => call('/stats'),
+  categories: () => call('/categories'),
   list: (f = {}) => call('?' + new URLSearchParams(Object.entries(f).filter(([, v]) => v))),
   create: (body) => call('', { method: 'POST', body }),
   update: (id, body) => call(`/${id}`, { method: 'PATCH', body }),

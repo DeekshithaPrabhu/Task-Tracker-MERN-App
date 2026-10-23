@@ -31,13 +31,44 @@ r.get('/stats', wrap(async (_req, res) => {
   });
 }));
 
+const esc = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const dayStart = (offset = 0) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + offset); return d; };
+const RANK = { low: 0, medium: 1, high: 2, urgent: 3 };
+const SORT_FIELD = { due: 'dueDate', created: 'createdAt', title: 'title' };
+const open = { status: { $ne: 'done' } };
+
+// Quick filters, each a preset applied on top of the other filters
+const QUICK = {
+  myday: () => [open, { dueDate: { $gte: dayStart(), $lt: dayStart(1) } }],
+  upcoming: () => [open, { dueDate: { $gte: dayStart(1) } }],
+  overdue: () => [open, { dueDate: { $lt: dayStart() } }],
+  completed: () => [{ status: 'done' }],
+};
+
+r.get('/categories', wrap(async (_req, res) => {
+  res.json((await Task.distinct('category')).filter(Boolean).sort((a, b) => a.localeCompare(b)));
+}));
+
 r.get('/', wrap(async (req, res) => {
-  const { q, status, priority } = req.query;
+  const { q, status, priority, category, dueFrom, dueTo, quick = 'all', sort = 'due', order = 'asc' } = req.query;
   const filter = {};
+  const and = [...(QUICK[quick]?.() || [])];
+
+  if (q) { const re = { $regex: esc(q), $options: 'i' }; filter.$or = [{ title: re }, { description: re }]; }
   if (status) filter.status = status;
   if (priority) filter.priority = priority;
-  if (q) filter.title = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-  res.json(await Task.find(filter).sort('dueDate'));
+  if (category) filter.category = category;
+  if (dueFrom) and.push({ dueDate: { $gte: new Date(`${dueFrom}T00:00:00`) } });
+  if (dueTo) and.push({ dueDate: { $lte: new Date(`${dueTo}T23:59:59.999`) } });
+  if (and.length) filter.$and = and;
+
+  const dir = order === 'desc' ? -1 : 1;
+  const query = Task.find(filter).collation({ locale: 'en' }); // case-insensitive title sort
+  if (sort === 'priority') {
+    const list = await query.sort('dueDate'); // due date breaks ties (Array.sort is stable)
+    return res.json(list.sort((a, b) => (RANK[a.priority] - RANK[b.priority]) * dir));
+  }
+  res.json(await query.sort({ [SORT_FIELD[sort] || 'dueDate']: dir }));
 }));
 r.post('/', wrap(async (req, res) => res.status(201).json(await Task.create(req.body))));
 
