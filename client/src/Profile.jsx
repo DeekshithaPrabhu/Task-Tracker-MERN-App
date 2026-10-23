@@ -29,15 +29,15 @@ export default function Profile() {
       <div className="grid prof">
         <form className="panel stack" onSubmit={run('info', async () => setUser(await api.profile(info)), 'Profile saved')}>
           <h2>Your details</h2>
-          <label>Name<input required value={info.name} onChange={(e) => setInfo({ ...info, name: e.target.value })} /></label>
-          <label>Email<input type="email" required value={info.email} onChange={(e) => setInfo({ ...info, email: e.target.value })} /></label>
+          <label>Name<input required value={info.name} onChange={(e) => { const val = e.target.value; setInfo((p) => ({ ...p, name: val })); }} /></label>
+          <label>Email<input type="email" required value={info.email} onChange={(e) => { const val = e.target.value; setInfo((p) => ({ ...p, email: val })); }} /></label>
           <Msg m={m.info} /><button className="primary">Save</button>
         </form>
 
         <form className="panel stack" onSubmit={run('pw', async () => { await api.changePassword(pw); setPw({ currentPassword: '', newPassword: '' }); }, 'Password changed')}>
           <h2>Change password</h2>
-          <label>Current password<input type="password" required autoComplete="current-password" value={pw.currentPassword} onChange={(e) => setPw({ ...pw, currentPassword: e.target.value })} /></label>
-          <label>New password (8 or more characters)<input type="password" required minLength={8} maxLength={72} autoComplete="new-password" value={pw.newPassword} onChange={(e) => setPw({ ...pw, newPassword: e.target.value })} /></label>
+          <label>Current password<input type="password" required autoComplete="current-password" value={pw.currentPassword} onChange={(e) => { const val = e.target.value; setPw((p) => ({ ...p, currentPassword: val })); }} /></label>
+          <label>New password (8 or more characters)<input type="password" required minLength={8} maxLength={72} autoComplete="new-password" value={pw.newPassword} onChange={(e) => { const val = e.target.value; setPw((p) => ({ ...p, newPassword: val })); }} /></label>
           <Msg m={m.pw} /><button className="primary">Update password</button>
         </form>
 

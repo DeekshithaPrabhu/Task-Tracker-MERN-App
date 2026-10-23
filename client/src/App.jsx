@@ -15,9 +15,9 @@ function Protected({ children }) {
 }
 
 function Guest({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth(); const loc = useLocation();
   if (loading) return <p className="state">Loading…</p>;
-  return user ? <Navigate to="/" replace /> : children;
+  return user ? <Navigate to={loc.state?.from || '/'} replace /> : children;
 }
 
 export default function App() {

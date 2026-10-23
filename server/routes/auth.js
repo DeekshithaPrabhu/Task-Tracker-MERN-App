@@ -11,6 +11,8 @@ import { sendResetEmail } from '../mailer.js';
 const r = Router();
 const wrap = (fn) => (req, res, next) => fn(req, res).catch(next);
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
+// Wrong-password attempts only; successful logins never count against the user
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, skipSuccessfulRequests: true, standardHeaders: true, legacyHeaders: false });
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const bad = (res, message, code = 400) => res.status(code).json({ message });
 const pwOk = (p) => typeof p === 'string' && p.length >= 8 && p.length <= 72; // bcrypt ignores bytes past 72
@@ -36,7 +38,7 @@ r.post('/register', limiter, wrap(async (req, res) => {
   res.status(201).json(pub(user));
 }));
 
-r.post('/login', limiter, wrap(async (req, res) => {
+r.post('/login', loginLimiter, wrap(async (req, res) => {
   const user = await User.findOne({ email: norm(req.body.email) }).select('+passwordHash');
   const ok = user && (await bcrypt.compare(String(req.body.password || ''), user.passwordHash));
   if (!ok) return bad(res, 'Invalid email or password', 401);

@@ -19,7 +19,7 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
   const [cats, setCats] = useState([]);
   useEffect(() => { api.categories().then((c) => setCats(c.map((x) => x.name))).catch(() => {}); }, []);
   const catOptions = f.category && !cats.includes(f.category) ? [...cats, f.category] : cats;
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const set = (k) => (e) => { const val = e.target.value; setF((p) => ({ ...p, [k]: val })); };
 
   const submit = async (e) => {
     e.preventDefault();
