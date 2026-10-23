@@ -47,6 +47,7 @@ export default function Tasks() {
               <div className="meta">
                 <span className={`badge s-${t.status}`}>{STATUS[t.status]}</span>
                 <span className="badge"><i className={`dot p-${t.priority}`} />{PRIORITY[t.priority]}</span>
+                {t.category && <span className="badge">{t.category}</span>}
                 {t.startDate && <span>Starts {fmt(t.startDate)}</span>}
                 <span className={isOverdue(t) ? 'overdue-text' : ''}>Due {fmt(t.dueDate)}{isOverdue(t) && ' (overdue)'}</span>
                 {t.estimatedMinutes && <span>Est. {fmtDuration(t.estimatedMinutes)}</span>}

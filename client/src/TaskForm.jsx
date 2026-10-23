@@ -6,6 +6,7 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
   const [f, setF] = useState({
     title: task?.title || '',
     description: task?.description || '',
+    category: task?.category || '',
     status: task?.status || 'todo',
     priority: task?.priority || 'medium',
     startDate: toInput(task?.startDate),
@@ -36,6 +37,7 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
         <h2>{task ? 'Edit task' : quick ? 'Quick add' : 'New task'}</h2>
         <label>Title<input autoFocus required value={f.title} onChange={set('title')} /></label>
         {!quick && <label>Description<textarea rows={3} value={f.description} onChange={set('description')} /></label>}
+        {!quick && <label>Category (optional)<input placeholder="e.g. Work, Home, Study" value={f.category} onChange={set('category')} /></label>}
         <div className="two">
           <label>Priority
             <select value={f.priority} onChange={set('priority')}>

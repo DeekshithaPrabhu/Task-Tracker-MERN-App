@@ -90,3 +90,23 @@ ul { list-style: none; margin: 0; padding: 0; }
 .danger-fill { background: var(--late); }
 .p-urgent { background: #8e1b3a; } .b-urgent { background: #8e1b3a; }
 @media (prefers-color-scheme: dark) { .p-urgent, .b-urgent { background: #ff5c8a; } }
+
+/* Kanban board */
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; align-items: start; }
+.col { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-height: 260px; display: grid; gap: 10px; align-content: start; transition: border-color .15s, background .15s; }
+.col.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+.col h2 { margin: 0; display: flex; justify-content: space-between; align-items: center; }
+.count { font: 600 .8rem Figtree, sans-serif; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 9px; }
+.kcard { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; cursor: grab; }
+.kcard:active { cursor: grabbing; }
+.kcard.dragging { opacity: .4; }
+.kcard.late { border-color: var(--late); box-shadow: inset 4px 0 var(--late); background: color-mix(in srgb, var(--late) 7%, var(--bg)); }
+.kc-top { display: flex; gap: 6px; flex-wrap: wrap; }
+.kc-top .badge { font-size: .78rem; }
+.late-tag { background: var(--late); border-color: var(--late); color: #fff !important; }
+.kc-title { all: unset; cursor: pointer; font-weight: 600; line-height: 1.35; }
+.kc-title:hover { color: var(--accent); }
+.kc-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kc-foot { display: flex; justify-content: space-between; color: var(--muted); font-size: .85rem; }
+.kcard select { font: inherit; font-size: .82rem; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--muted); }
+@media (max-width: 800px) { .board { grid-template-columns: 1fr; } }

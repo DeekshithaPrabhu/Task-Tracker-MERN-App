@@ -5,6 +5,7 @@ const taskSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
   status: { type: String, enum: ['todo', 'in-progress', 'done'], default: 'todo' },
+  category: { type: String, trim: true, default: '' },
   startDate: Date,
   dueDate: { type: Date, required: true },
   estimatedMinutes: { type: Number, min: [1, 'Estimate must be at least 1 minute'] },

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import TaskForm from './TaskForm.jsx';
 import Tasks from './Tasks.jsx';
+import Board from './Board.jsx';
 import { fmt, isOverdue, STATUS, PRIORITY } from './utils.js';
 
 function Ring({ value }) {
@@ -110,11 +111,11 @@ export default function App() {
   return (
     <main>
       <nav className="tabs">
-        {[['dashboard', 'Dashboard'], ['tasks', 'All tasks']].map(([v, label]) => (
+        {[['dashboard', 'Dashboard'], ['board', 'Board'], ['tasks', 'All tasks']].map(([v, label]) => (
           <button key={v} className={view === v ? 'on' : ''} aria-current={view === v} onClick={() => go(v)}>{label}</button>
         ))}
       </nav>
-      {view === 'tasks' ? <Tasks /> : dashboard}
+      {view === 'tasks' ? <Tasks /> : view === 'board' ? <Board /> : dashboard}
     </main>
   );
 }
