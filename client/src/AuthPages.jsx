@@ -34,10 +34,11 @@ function useForm(initial, submit) {
 const Status = ({ err, ok }) => <>{err && <p className="err" role="alert">{err}</p>}{ok && <p className="okmsg" role="status">{ok}</p>}</>;
 
 export function Login() {
-  const { login } = useAuth(); const nav = useNavigate(); const loc = useLocation();
+  const { login, expired } = useAuth(); const nav = useNavigate(); const loc = useLocation();
   const f = useForm({ email: '', password: '' }, async (v) => { await login(v); nav(loc.state?.from || '/', { replace: true }); });
   return (
     <Card title="Log in" footer={<>New here? <Link to="/register">Create an account</Link></>}>
+      {expired && <p className="notice" role="alert">Your session expired. Log in again to pick up where you left off.</p>}
       <form className="auth-form" onSubmit={f.onSubmit}>
         <label>Email<input type="email" required autoComplete="email" autoFocus {...f.bind('email')} /></label>
         <label>Password<input type="password" required autoComplete="current-password" {...f.bind('password')} /></label>

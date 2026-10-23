@@ -6,11 +6,12 @@ import Dashboard from './Dashboard.jsx';
 import Board from './Board.jsx';
 import Tasks from './Tasks.jsx';
 import Profile from './Profile.jsx';
+import NotFound from './NotFound.jsx';
 
 function Protected({ children }) {
-  const { user, loading } = useAuth(); const loc = useLocation();
+  const { user, loading, expired } = useAuth(); const loc = useLocation();
   if (loading) return <p className="state">Loading…</p>;
-  return user ? children : <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+  return user ? children : <Navigate to="/login" replace state={{ from: loc.pathname + loc.search, expired }} />;
 }
 
 function Guest({ children }) {
@@ -33,7 +34,7 @@ export default function App() {
           <Route path="tasks" element={<Tasks />} />
           <Route path="profile" element={<Profile />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   );

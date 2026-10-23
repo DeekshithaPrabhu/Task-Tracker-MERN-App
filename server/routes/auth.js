@@ -92,7 +92,7 @@ r.patch('/profile', requireAuth, wrap(async (req, res) => {
 
 r.patch('/password', requireAuth, limiter, wrap(async (req, res) => {
   const user = await User.findById(req.userId).select('+passwordHash');
-  if (!(await bcrypt.compare(String(req.body.currentPassword || ''), user.passwordHash))) return bad(res, 'Current password is incorrect', 401);
+  if (!(await bcrypt.compare(String(req.body.currentPassword || ''), user.passwordHash))) return bad(res, 'Current password is incorrect');
   if (!pwOk(req.body.newPassword)) return bad(res, 'New password must be 8 to 72 characters');
   user.passwordHash = await bcrypt.hash(req.body.newPassword, 12);
   await user.save();

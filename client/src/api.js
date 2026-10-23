@@ -1,10 +1,12 @@
 const request = async (path, { body, ...opts } = {}) => {
-  const res = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json' }, ...opts,
-    body: body && JSON.stringify(body),
-  });
-  // A 401 outside the auth screens means the session ended
-  if (res.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event('auth:expired'));
+  let res;
+  try {
+    res = await fetch(`/api${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts, body: body && JSON.stringify(body) });
+  } catch {
+    throw new Error("Can't reach the server. Check your connection and try again.");
+  }
+  // 401 on anything except login or the startup check means the session ended
+  if (res.status === 401 && !['/auth/login', '/auth/me'].includes(path)) window.dispatchEvent(new Event('auth:expired'));
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Request failed');
   return res.status === 204 ? null : res.json();
 };
