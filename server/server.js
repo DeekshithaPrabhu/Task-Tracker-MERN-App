@@ -1,7 +1,11 @@
-// Entry point: connects to MongoDB, then starts the HTTP server.
+// Entry point.
+// - Vercel: the platform imports the exported Express app (VERCEL is set there).
+// - Local:  starts a normal HTTP server.
 import app from './src/app.js';
 import { env } from './src/config/env.js';
-import { connectDatabase } from './src/config/db.js';
 
-await connectDatabase();
-app.listen(env.port, () => console.log(`API listening on http://localhost:${env.port}`));
+if (!process.env.VERCEL) {
+  app.listen(env.port, () => console.log(`API listening on http://localhost:${env.port}`));
+}
+
+export default app;

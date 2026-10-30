@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api';
 import TaskForm from '@/components/tasks/TaskForm.jsx';
-import { fmt, fmtDuration, isOverdue, STATUS, PRIORITY } from '@/utils';
+import TaskDetail from '@/components/tasks/TaskDetail.jsx';
+import { fmt, fmtDuration, isOverdue, subProgress, STATUS, PRIORITY } from '@/utils';
 
 const DEFAULTS = { q: '', status: '', priority: '', category: '', tag: '', dueFrom: '', dueTo: '', quick: 'all' };
 const QUICK = [['all', 'All'], ['myday', 'My Day'], ['upcoming', 'Upcoming'], ['overdue', 'Overdue'], ['completed', 'Completed']];
@@ -15,8 +17,12 @@ export default function Tasks() {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [editing, setEditing] = useState(null); // a task, 'new', or null
-  const [deleting, setDeleting] = useState(null); // the task waiting for delete confirmation
+  const [deleting, setDeleting] = useState(null); // { ids, label }
+  const [selected, setSelected] = useState(new Set());
+  const [bulkDue, setBulkDue] = useState('');
   const [error, setError] = useState('');
+  const [params, setParams] = useSearchParams();
+  const detailId = params.get('task'); // deep link, also used by reminders
 
   const filtersActive = Object.keys(DEFAULTS).some((k) => filters[k] !== DEFAULTS[k]);
 
@@ -26,11 +32,20 @@ export default function Tasks() {
     return api.list({ ...filters, ...sort }).then(setTasks).catch((e) => setError(e.message));
   }, [filters, sort]);
   useEffect(() => { const id = setTimeout(load, 200); return () => clearTimeout(id); }, [load]);
+  useEffect(() => setSelected(new Set()), [filters]);
 
   const act = (fn) => async () => { try { await fn(); await load(); } catch (e) { setError(e.message); } };
   const save = async (body) => { await (editing === 'new' ? api.create(body) : api.update(editing._id, body)); await load(); };
   const setF = (k) => (e) => setFilters({ ...filters, [k]: e.target.value });
   const pickQuick = (quick) => setFilters({ ...filters, quick, status: '', dueFrom: '', dueTo: '' });
+
+  // Bulk selection works on the tasks currently shown
+  const chosen = (tasks || []).filter((t) => selected.has(t._id));
+  const ids = chosen.map((t) => t._id);
+  const allSelected = tasks?.length > 0 && chosen.length === tasks.length;
+  const toggle = (id) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const bulk = (update) => act(async () => { await api.bulk(ids, update); setSelected(new Set()); })();
+  const pickBulk = (key, map = (v) => v) => (e) => { if (e.target.value) bulk({ [key]: map(e.target.value) }); };
 
   return (
     <>
@@ -80,15 +95,35 @@ export default function Tasks() {
       </div>
       {filters.quick !== 'all' && <p className="hint">Status and due date filters are off while a quick filter is selected.</p>}
       {error && <p className="err" onClick={() => setError('')}>{error}</p>}
-      {tasks && <p className="hint" aria-live="polite">{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</p>}
+
+      {tasks?.length > 0 && (
+        <div className="selectbar">
+          <label><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(tasks.map((t) => t._id)))} /> Select all</label>
+          <span className="hint" aria-live="polite">{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</span>
+        </div>
+      )}
+
+      {chosen.length > 0 && (
+        <div className="bulkbar panel" role="region" aria-label="Bulk actions">
+          <strong>{chosen.length} selected</strong>
+          <button className="primary small" onClick={() => bulk({ status: 'done' })}>Complete</button>
+          <select value="" onChange={pickBulk('status')} aria-label="Set status for selected"><option value="">Set status…</option>{Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <select value="" onChange={pickBulk('priority')} aria-label="Set priority for selected"><option value="">Set priority…</option>{Object.entries(PRIORITY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <select value="" onChange={pickBulk('category', (v) => (v === '-' ? '' : v))} aria-label="Set category for selected"><option value="">Set category…</option><option value="-">No category</option>{categories.map((c) => <option key={c}>{c}</option>)}</select>
+          <label className="inline"><input type="date" value={bulkDue} onChange={(e) => setBulkDue(e.target.value)} aria-label="New due date for selected" />
+            <button className="ghost small" disabled={!bulkDue} onClick={() => { bulk({ dueDate: new Date(bulkDue + 'T23:59:00') }); setBulkDue(''); }}>Set due date</button></label>
+          <button className="ghost small danger push" onClick={() => setDeleting({ ids, label: `${ids.length} ${ids.length === 1 ? 'task' : 'tasks'}` })}>Delete</button>
+        </div>
+      )}
 
       <ul className="list">
         {tasks === null && <p className="empty">Loading tasks…</p>}
         {tasks?.length === 0 && <p className="empty">{filtersActive ? 'No tasks match these filters.' : 'No tasks yet. Create one with “New task”.'}</p>}
         {tasks?.map((t) => (
-          <li key={t._id} className={`panel item ${isOverdue(t) ? 'late' : ''}`}>
+          <li key={t._id} className={`panel item ${isOverdue(t) ? 'late' : ''} ${selected.has(t._id) ? 'picked' : ''}`}>
+            <input type="checkbox" className="pick" checked={selected.has(t._id)} onChange={() => toggle(t._id)} aria-label={`Select ${t.title}`} />
             <div className="item-main">
-              <strong className={t.status === 'done' ? 'struck' : ''}>{t.title}</strong>
+              <button className={`kc-title ${t.status === 'done' ? 'struck' : ''}`} onClick={() => setParams({ task: t._id })}>{t.title}</button>
               {t.description && <p className="desc">{t.description}</p>}
               <div className="meta">
                 <span className={`badge s-${t.status}`}>{STATUS[t.status]}</span>
@@ -98,26 +133,28 @@ export default function Tasks() {
                 {t.startDate && <span>Starts {fmt(t.startDate)}</span>}
                 <span className={isOverdue(t) ? 'overdue-text' : ''}>Due {fmt(t.dueDate)}{isOverdue(t) && ' (overdue)'}</span>
                 {t.estimatedMinutes && <span>Est. {fmtDuration(t.estimatedMinutes)}</span>}
+                {subProgress(t) && <span>Subtasks {subProgress(t)}</span>}
               </div>
             </div>
             <div className="item-actions">
               <button onClick={act(() => api.update(t._id, { status: t.status === 'done' ? 'todo' : 'done' }))}>{t.status === 'done' ? 'Reopen' : 'Mark complete'}</button>
               <button onClick={() => setEditing(t)}>Edit</button>
-              <button className="danger" onClick={() => setDeleting(t)}>Delete</button>
+              <button className="danger" onClick={() => setDeleting({ ids: [t._id], label: `“${t.title}”` })}>Delete</button>
             </div>
           </li>
         ))}
       </ul>
 
+      {detailId && <TaskDetail id={detailId} onClose={() => setParams({})} onChanged={load} onEdit={(t) => { setParams({}); setEditing(t); }} />}
       {editing && <TaskForm task={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSave={save} />}
       {deleting && (
         <div className="overlay" onClick={() => setDeleting(null)}>
           <div className="modal" role="alertdialog" aria-labelledby="del-h" onClick={(e) => e.stopPropagation()}>
-            <h2 id="del-h">Delete this task?</h2>
-            <p>“{deleting.title}” will be permanently removed. This can't be undone.</p>
+            <h2 id="del-h">Delete {deleting.ids.length === 1 ? 'this task' : `${deleting.ids.length} tasks`}?</h2>
+            <p>{deleting.label} will be permanently removed, with their subtasks and history. This can't be undone.</p>
             <div className="actions">
-              <button className="ghost" autoFocus onClick={() => setDeleting(null)}>Keep task</button>
-              <button className="primary danger-fill" onClick={act(async () => { await api.remove(deleting._id); setDeleting(null); })}>Delete task</button>
+              <button className="ghost" autoFocus onClick={() => setDeleting(null)}>Keep {deleting.ids.length === 1 ? 'task' : 'tasks'}</button>
+              <button className="primary danger-fill" onClick={act(async () => { await api.bulkDelete(deleting.ids); setSelected(new Set()); setDeleting(null); })}>Delete</button>
             </div>
           </div>
         </div>

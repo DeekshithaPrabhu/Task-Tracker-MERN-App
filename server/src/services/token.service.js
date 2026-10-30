@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 
-const cookieOptions = { httpOnly: true, sameSite: 'lax', secure: env.isProd };
+// Deployed: frontend and API are on different domains, so the cookie must be SameSite=None (and Secure)
+const cookieOptions = { httpOnly: true, sameSite: env.isProd ? 'none' : 'lax', secure: env.isProd };
 
 export const startSession = (res, user) => {
   const token = jwt.sign({ sub: user.id }, env.jwtSecret, { expiresIn: '7d' });

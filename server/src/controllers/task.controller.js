@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import Task from '../models/Task.js';
+import Activity from '../models/Activity.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { dayStart } from '../utils/dates.js';
+import { applyChanges, record } from '../services/activity.service.js';
 import { OPEN, buildTaskFilter, findOwnedTask, pickTaskFields } from '../services/task.service.js';
 
 const RANK = { low: 0, medium: 1, high: 2, urgent: 3 };
@@ -47,14 +49,49 @@ export const listTasks = asyncHandler(async (req, res) => {
 });
 
 export const createTask = asyncHandler(async (req, res) => {
-  res.status(201).json(await Task.create({ ...pickTaskFields(req.body), user: req.userId }));
+  const task = await Task.create({ ...pickTaskFields(req.body), user: req.userId });
+  await record([{ task: task._id, user: req.userId, kind: 'created' }]);
+  res.status(201).json(task);
+});
+
+// ---- Bulk actions ----
+const BULK_FIELDS = ['status', 'priority', 'category', 'dueDate'];
+const idsOf = (b) => (Array.isArray(b.ids) ? b.ids : []).slice(0, 200);
+
+export const bulkUpdate = asyncHandler(async (req, res) => {
+  const changes = {};
+  for (const k of BULK_FIELDS) if (k in (req.body.update || {})) changes[k] = req.body.update[k];
+  if (!Object.keys(changes).length) return res.status(400).json({ message: 'Nothing to update' });
+
+  const tasks = await Task.find({ _id: { $in: idsOf(req.body) }, user: req.userId });
+  const entries = tasks.flatMap((t) => applyChanges(t, changes, req.userId));
+  await Promise.all(tasks.map((t) => t.validate())); // all or nothing: fail before saving anything
+  await Promise.all(tasks.map((t) => t.save()));
+  await record(entries);
+  res.json({ updated: tasks.length });
+});
+
+export const bulkDelete = asyncHandler(async (req, res) => {
+  const found = await Task.find({ _id: { $in: idsOf(req.body) }, user: req.userId }).select('_id');
+  const ids = found.map((t) => t._id);
+  await Task.deleteMany({ _id: { $in: ids } });
+  await Activity.deleteMany({ task: { $in: ids } });
+  res.json({ deleted: ids.length });
+});
+
+// ---- Single task ----
+export const getTask = asyncHandler(async (req, res) => {
+  const task = await findOwnedTask(req.userId, req.params.id);
+  task ? res.json(task) : res.status(404).json({ message: 'Task not found' });
 });
 
 export const updateTask = asyncHandler(async (req, res) => {
   const task = await findOwnedTask(req.userId, req.params.id);
   if (!task) return res.status(404).json({ message: 'Task not found' });
-  Object.assign(task, pickTaskFields(req.body));
-  res.json(await task.save());
+  const entries = applyChanges(task, pickTaskFields(req.body), req.userId);
+  await task.save();
+  await record(entries);
+  res.json(task);
 });
 
 export const extendTask = asyncHandler(async (req, res) => {
@@ -62,11 +99,15 @@ export const extendTask = asyncHandler(async (req, res) => {
   if (!Number.isFinite(days) || days < 1) return res.status(400).json({ message: 'days must be 1 or more' });
   const task = await findOwnedTask(req.userId, req.params.id);
   if (!task) return res.status(404).json({ message: 'Task not found' });
-  task.dueDate = new Date(Math.max(task.dueDate.getTime(), Date.now()) + days * 86400000);
-  res.json(await task.save());
+  const due = new Date(Math.max(task.dueDate.getTime(), Date.now()) + days * 86400000);
+  const entries = applyChanges(task, { dueDate: due }, req.userId);
+  await task.save();
+  await record(entries);
+  res.json(task);
 });
 
 export const deleteTask = asyncHandler(async (req, res) => {
-  await Task.findOneAndDelete({ _id: req.params.id, user: req.userId });
+  const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.userId });
+  if (task) await Activity.deleteMany({ task: task._id });
   res.status(204).end();
 });

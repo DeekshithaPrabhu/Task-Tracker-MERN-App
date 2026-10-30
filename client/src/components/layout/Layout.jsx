@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { api } from '@/api';
+import Bell from '@/components/layout/Bell.jsx';
 
 const THEMES = ['system', 'light', 'dark'];
 
@@ -21,6 +22,7 @@ export default function Layout() {
           <NavLink to="/tasks">All tasks</NavLink>
         </div>
         <div className="usermenu">
+          <Bell />
           <button className="ghost small" onClick={cycleTheme} title="Switch between system, light and dark">Theme: {user.theme}</button>
           <NavLink to="/profile" className="who">{user.name}</NavLink>
           <button className="ghost small" onClick={async () => { await logout(); nav('/login'); }}>Log out</button>
