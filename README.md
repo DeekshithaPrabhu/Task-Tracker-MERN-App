@@ -1,8 +1,9 @@
 # Task Tracker App (MERN)
 
 ## Run locally
+
 1. Start MongoDB (or use an Atlas URI).
-2. Copy `server/.env.example` to `server/.env` and fill it in. `client/.env` is optional locally.
+2. Copy `server/.env.example` to `server/.env` and fill it.
 3. `npm run install:all`
 4. `npm run dev`: web on http://localhost:5173, API on http://localhost:5000
 
@@ -38,7 +39,6 @@ Task-Tracker-App/
 
 `@/` in client imports means `client/src/` (for example `import { api } from '@/api'`).
 
-
 ## API
-- `/api/tasks`: `/stats`, create, update (`PATCH /:id`), `/:id/extend`
-- `GET /api/tasks` (list), `DELETE /api/tasks/:id`
+
+- `/api/tasks`: list (`q, status, priority, category, dueFrom, dueTo, quick, sort, order`), `/stats`, create, update, delete, `/:id/extend`
