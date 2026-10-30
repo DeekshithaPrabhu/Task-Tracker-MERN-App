@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/api';
+import { useBusy } from '@/hooks/useBusy.js';
 import TaskForm from '@/components/tasks/TaskForm.jsx';
 import TaskDetail from '@/components/tasks/TaskDetail.jsx';
 import { fmt, fmtDuration, isOverdue, subProgress, STATUS, PRIORITY } from '@/utils';
@@ -13,12 +14,14 @@ export default function Board() {
   const [editing, setEditing] = useState(null);
   const [detailId, setDetailId] = useState(null);
   const [error, setError] = useState('');
+  const { run, isBusy } = useBusy();
 
   const load = useCallback(() => api.list().then(setTasks).catch((e) => setError(e.message)), []);
   useEffect(() => { load(); }, [load]);
 
   // Optimistic move: update the UI first, save to MongoDB, roll back that card if the save fails
-  const move = async (id, status) => {
+  // While a card is being saved it can't be dragged or moved again
+  const move = (id, status) => run(`task:${id}`, async () => {
     const task = tasks.find((x) => x._id === id);
     if (!task || task.status === status) return;
     setTasks((cur) => cur.map((x) => (x._id === id ? { ...x, status } : x)));
@@ -29,7 +32,7 @@ export default function Board() {
       setTasks((cur) => cur.map((x) => (x._id === id ? task : x)));
       setError(`Couldn't move “${task.title}”: ${e.message}`);
     }
-  };
+  });
 
   const drop = (e, status) => {
     e.preventDefault();
@@ -60,7 +63,7 @@ export default function Board() {
               {items.map((t) => {
                 const late = isOverdue(t);
                 return (
-                  <article key={t._id} draggable className={`kcard ${late ? 'late' : ''} ${dragId === t._id ? 'dragging' : ''}`}
+                  <article key={t._id} draggable={!isBusy(`task:${t._id}`)} className={`kcard ${late ? 'late' : ''} ${dragId === t._id ? 'dragging' : ''}`}
                     onDragStart={(e) => { e.dataTransfer.setData('text/plain', t._id); e.dataTransfer.effectAllowed = 'move'; setDragId(t._id); }}
                     onDragEnd={() => { setDragId(null); setOverCol(null); }}>
                     <div className="kc-top">
@@ -75,7 +78,7 @@ export default function Board() {
                       {subProgress(t) && <span>Subtasks {subProgress(t)}</span>}
                     </div>
                     {/* Keyboard and touch alternative to dragging */}
-                    <select value={t.status} onChange={(e) => move(t._id, e.target.value)} aria-label={`Move ${t.title} to another column`}>
+                    <select value={t.status} disabled={isBusy(`task:${t._id}`)} onChange={(e) => move(t._id, e.target.value)} aria-label={`Move ${t.title} to another column`}>
                       {COLUMNS.map((c) => <option key={c} value={c}>{STATUS[c]}</option>)}
                     </select>
                   </article>

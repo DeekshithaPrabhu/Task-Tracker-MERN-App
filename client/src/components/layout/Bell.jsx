@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@/api';
+import { useBusy } from '@/hooks/useBusy.js';
 import { fmt } from '@/utils';
 
 export default function Bell() {
@@ -8,6 +9,7 @@ export default function Bell() {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const nav = useNavigate();
+  const { run, isBusy } = useBusy();
   const { pathname } = useLocation();
 
   const load = useCallback(() => api.notifications().then(setData).catch(() => {}), []);
@@ -23,7 +25,7 @@ export default function Bell() {
   }, [open]);
 
   const groups = [['Overdue', data.overdue, 'late'], ['Due today', data.today, ''], ['Coming up', data.soon, '']];
-  const snooze = async (id) => { await api.extend(id, 1).catch(() => {}); load(); };
+  const snooze = (id) => run(`snooze:${id}`, async () => { await api.extend(id, 1).catch(() => {}); await load(); });
 
   return (
     <div className="bell" ref={ref}>
@@ -41,7 +43,7 @@ export default function Bell() {
                   <button className="kc-title" onClick={() => { setOpen(false); nav(`/tasks?task=${t._id}`); }}>
                     {t.title}<small>Due {fmt(t.dueDate)}</small>
                   </button>
-                  <button className="ghost small" onClick={() => snooze(t._id)} title="Push the due date by one day">+1d</button>
+                  <button className="ghost small" disabled={isBusy(`snooze:${t._id}`)} onClick={() => snooze(t._id)} title="Push the due date by one day">+1d</button>
                 </div>
               ))}
             </section>

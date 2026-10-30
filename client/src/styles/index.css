@@ -234,7 +234,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .card:hover, .item:hover, .kcard:hover, .ringpanel:hover, .grid:not(.prof) > .panel:hover { transform: translateY(-3px); box-shadow: var(--lift); }
   .primary:not(:disabled):hover { transform: scale(1.04); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 38%, transparent); }
   .danger-fill:not(:disabled):hover { box-shadow: 0 8px 22px color-mix(in srgb, var(--late) 38%, transparent); }
-  .ghost:not(:disabled):hover, .chip:hover, .item-actions button:hover, .extend button:hover, .tabs a:hover { transform: scale(1.04); }
+  .ghost:not(:disabled):hover, .chip:hover, .item-actions button:not(:disabled):hover, .extend button:not(:disabled):hover, .tabs a:hover { transform: scale(1.04); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
@@ -249,3 +249,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 /* While a popup is open, don't let the page behind it scroll */
 body:has(.overlay) { overflow: hidden; }
+
+/* Buttons and controls that are waiting for the API */
+button[aria-busy='true'] { cursor: progress; }
+.link:disabled { opacity: .5; cursor: not-allowed; }
+input[type='checkbox']:disabled { opacity: .5; cursor: not-allowed; }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '@/api';
 import { STATUS, PRIORITY, toInput } from '@/utils';
 
@@ -16,6 +16,8 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
     estimatedMinutes: task?.estimatedMinutes || '',
   });
   const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const locked = useRef(false); // ignore double clicks while the request is running
   const [cats, setCats] = useState([]);
   useEffect(() => { api.categories().then((c) => setCats(c.map((x) => x.name))).catch(() => {}); }, []);
   const catOptions = f.category && !cats.includes(f.category) ? [...cats, f.category] : cats;
@@ -24,6 +26,9 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
   const submit = async (e) => {
     e.preventDefault();
     if (f.startDate && f.dueDate < f.startDate) return setErr('Due date cannot be before the start date.');
+    if (locked.current) return;
+    locked.current = true;
+    setBusy(true);
     try {
       await onSave({
         ...f,
@@ -35,6 +40,8 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
       });
       onClose();
     } catch (x) { setErr(x.message); }
+    locked.current = false;
+    setBusy(false);
   };
 
   return (
@@ -82,7 +89,7 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
         {err && <p className="err">{err}</p>}
         <div className="actions">
           <button type="button" className="ghost" onClick={onClose}>Cancel</button>
-          <button className="primary">{task ? 'Save changes' : 'Add task'}</button>
+          <button className="primary" disabled={busy} aria-busy={busy}>{busy ? 'Saving…' : task ? 'Save changes' : 'Add task'}</button>
         </div>
       </form>
     </div>

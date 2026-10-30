@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "@/api";
+import { useBusy } from "@/hooks/useBusy.js";
 import TaskForm from "@/components/tasks/TaskForm.jsx";
 import TaskDetail from "@/components/tasks/TaskDetail.jsx";
 import {
@@ -45,9 +46,11 @@ const NATURAL_ORDER = {
 export default function Tasks() {
   const [tasks, setTasks] = useState(null);
   const [filters, setFilters] = useState(DEFAULTS);
-  const [sort, setSort] = useState({ sort: "due", order: "asc" });
+  const [sort, setSort] = useState({ sort: "due", order: "desc" });
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { run, isBusy } = useBusy();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [info, setInfo] = useState({ total: 0, page: 1, pages: 1 });
@@ -72,6 +75,7 @@ export default function Tasks() {
       .tags()
       .then(setTags)
       .catch(() => {});
+    setLoading(true);
     return api
       .list({ ...filters, ...sort, page, limit })
       .then((r) => {
@@ -79,7 +83,8 @@ export default function Tasks() {
         setInfo(r);
         if (r.page !== page) setPage(r.page);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, [filters, sort, page, limit]);
   useEffect(() => {
     const id = setTimeout(load, 200);
@@ -93,14 +98,16 @@ export default function Tasks() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page]);
 
-  const act = (fn) => async () => {
-    try {
-      await fn();
-      await load();
-    } catch (e) {
-      setError(e.message);
-    }
-  };
+  // `key` names the action: its button stays disabled until the API call and the reload are done
+  const act = (key, fn) => () =>
+    run(key, async () => {
+      try {
+        await fn();
+        await load();
+      } catch (e) {
+        setError(e.message);
+      }
+    });
   const save = async (body) => {
     await (editing === "new"
       ? api.create(body)
@@ -121,8 +128,9 @@ export default function Tasks() {
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
+  const bulkBusy = isBusy("bulk");
   const bulk = (update) =>
-    act(async () => {
+    act("bulk", async () => {
       await api.bulk(ids, update);
       setSelected(new Set());
     })();
@@ -301,12 +309,15 @@ export default function Tasks() {
           <strong>{chosen.length} selected</strong>
           <button
             className="primary small"
+            disabled={bulkBusy}
+            aria-busy={bulkBusy}
             onClick={() => bulk({ status: "done" })}
           >
             Complete
           </button>
           <select
             value=""
+            disabled={bulkBusy}
             onChange={pickBulk("status")}
             aria-label="Set status for selected"
           >
@@ -319,6 +330,7 @@ export default function Tasks() {
           </select>
           <select
             value=""
+            disabled={bulkBusy}
             onChange={pickBulk("priority")}
             aria-label="Set priority for selected"
           >
@@ -331,6 +343,7 @@ export default function Tasks() {
           </select>
           <select
             value=""
+            disabled={bulkBusy}
             onChange={pickBulk("category", (v) => (v === "-" ? "" : v))}
             aria-label="Set category for selected"
           >
@@ -349,7 +362,7 @@ export default function Tasks() {
             />
             <button
               className="ghost small"
-              disabled={!bulkDue}
+              disabled={!bulkDue || bulkBusy}
               onClick={() => {
                 bulk({ dueDate: new Date(bulkDue + "T23:59:00") });
                 setBulkDue("");
@@ -360,6 +373,7 @@ export default function Tasks() {
           </label>
           <button
             className="ghost small danger push"
+            disabled={bulkBusy}
             onClick={() =>
               setDeleting({
                 ids,
@@ -428,7 +442,8 @@ export default function Tasks() {
             </div>
             <div className="item-actions">
               <button
-                onClick={act(() =>
+                disabled={isBusy(`task:${t._id}`)}
+                onClick={act(`task:${t._id}`, () =>
                   api.update(t._id, {
                     status: t.status === "done" ? "todo" : "done",
                   }),
@@ -454,7 +469,7 @@ export default function Tasks() {
         <nav className="pager" aria-label="Pagination">
           <button
             className="ghost small"
-            disabled={page <= 1}
+            disabled={page <= 1 || loading}
             onClick={() => setPage(page - 1)}
           >
             Previous
@@ -464,7 +479,7 @@ export default function Tasks() {
           </span>
           <button
             className="ghost small"
-            disabled={page >= info.pages}
+            disabled={page >= info.pages || loading}
             onClick={() => setPage(page + 1)}
           >
             Next
@@ -475,7 +490,7 @@ export default function Tasks() {
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
             >
-              {[5, 10, 20, 50].map((n) => (
+              {[10, 20, 50].map((n) => (
                 <option key={n}>{n}</option>
               ))}
             </select>
@@ -530,13 +545,15 @@ export default function Tasks() {
               </button>
               <button
                 className="primary danger-fill"
-                onClick={act(async () => {
+                disabled={isBusy("delete")}
+                aria-busy={isBusy("delete")}
+                onClick={act("delete", async () => {
                   await api.bulkDelete(deleting.ids);
                   setSelected(new Set());
                   setDeleting(null);
                 })}
               >
-                Delete
+                {isBusy("delete") ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>
