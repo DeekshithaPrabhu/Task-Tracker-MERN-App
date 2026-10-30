@@ -1,7 +1,10 @@
 import Task from '../models/Task.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { dayStart } from '../utils/dates.js';
-import { OPEN, pickTaskFields } from '../services/task.service.js';
+import { OPEN, buildTaskFilter, pickTaskFields } from '../services/task.service.js';
+
+const RANK = { low: 0, medium: 1, high: 2, urgent: 3 };
+const SORT_FIELD = { due: 'dueDate', created: 'createdAt', title: 'title' };
 
 export const getStats = asyncHandler(async (_req, res) => {
   const start = dayStart(), end = dayStart(1), week = dayStart(8);
@@ -25,8 +28,19 @@ export const getStats = asyncHandler(async (_req, res) => {
   });
 });
 
-export const listTasks = asyncHandler(async (_req, res) => {
-  res.json(await Task.find().sort('dueDate'));
+export const getCategories = asyncHandler(async (_req, res) => {
+  res.json((await Task.distinct('category')).filter(Boolean).sort((a, b) => a.localeCompare(b)));
+});
+
+export const listTasks = asyncHandler(async (req, res) => {
+  const { sort = 'due', order = 'asc' } = req.query;
+  const filter = buildTaskFilter(req.query);
+
+  const dir = order === 'desc' ? -1 : 1;
+  const field = SORT_FIELD[sort] || 'dueDate';
+  const find = () => Task.find(filter).collation({ locale: 'en' });
+  const byPriority = (list) => list.sort((a, b) => (RANK[a.priority] - RANK[b.priority]) * dir);
+  res.json(sort === 'priority' ? byPriority(await find().sort('dueDate')) : await find().sort({ [field]: dir }));
 });
 
 export const createTask = asyncHandler(async (req, res) => {
