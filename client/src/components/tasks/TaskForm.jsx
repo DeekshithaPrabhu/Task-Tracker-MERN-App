@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '@/api';
 import { STATUS, PRIORITY, toInput } from '@/utils';
 
 // Used for creating (task = null) and editing. `quick` shows only the essentials.
@@ -7,6 +8,7 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
     title: task?.title || '',
     description: task?.description || '',
     category: task?.category || '',
+    tags: (task?.tags || []).join(', '),
     status: task?.status || 'todo',
     priority: task?.priority || 'medium',
     startDate: toInput(task?.startDate),
@@ -14,6 +16,9 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
     estimatedMinutes: task?.estimatedMinutes || '',
   });
   const [err, setErr] = useState('');
+  const [cats, setCats] = useState([]);
+  useEffect(() => { api.categories().then((c) => setCats(c.map((x) => x.name))).catch(() => {}); }, []);
+  const catOptions = f.category && !cats.includes(f.category) ? [...cats, f.category] : cats;
   const set = (k) => (e) => { const val = e.target.value; setF((p) => ({ ...p, [k]: val })); };
 
   const submit = async (e) => {
@@ -22,6 +27,7 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
     try {
       await onSave({
         ...f,
+        tags: f.tags.split(','),
         title: f.title.trim(),
         startDate: f.startDate ? new Date(f.startDate + 'T00:00:00') : null,
         dueDate: new Date(f.dueDate + 'T23:59:00'),
@@ -37,7 +43,17 @@ export default function TaskForm({ task, quick, onClose, onSave }) {
         <h2>{task ? 'Edit task' : quick ? 'Quick add' : 'New task'}</h2>
         <label>Title<input autoFocus required value={f.title} onChange={set('title')} /></label>
         {!quick && <label>Description<textarea rows={3} value={f.description} onChange={set('description')} /></label>}
-        {!quick && <label>Category (optional)<input placeholder="e.g. Work, Home, Study" value={f.category} onChange={set('category')} /></label>}
+        {!quick && (
+          <div className="two">
+            <label>Category
+              <select value={f.category} onChange={set('category')}>
+                <option value="">None</option>
+                {catOptions.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </label>
+            <label>Tags (comma separated)<input placeholder="e.g. errands, deep-work" value={f.tags} onChange={set('tags')} /></label>
+          </div>
+        )}
         <div className="two">
           <label>Priority
             <select value={f.priority} onChange={set('priority')}>

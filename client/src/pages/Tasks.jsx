@@ -3,7 +3,7 @@ import { api } from '@/api';
 import TaskForm from '@/components/tasks/TaskForm.jsx';
 import { fmt, fmtDuration, isOverdue, STATUS, PRIORITY } from '@/utils';
 
-const DEFAULTS = { q: '', status: '', priority: '', category: '', dueFrom: '', dueTo: '', quick: 'all' };
+const DEFAULTS = { q: '', status: '', priority: '', category: '', tag: '', dueFrom: '', dueTo: '', quick: 'all' };
 const QUICK = [['all', 'All'], ['myday', 'My Day'], ['upcoming', 'Upcoming'], ['overdue', 'Overdue'], ['completed', 'Completed']];
 const SORTS = { due: 'Due date', priority: 'Priority', created: 'Creation date', title: 'Title' };
 const NATURAL_ORDER = { due: 'asc', priority: 'desc', created: 'desc', title: 'asc' };
@@ -13,6 +13,7 @@ export default function Tasks() {
   const [filters, setFilters] = useState(DEFAULTS);
   const [sort, setSort] = useState({ sort: 'due', order: 'asc' });
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [editing, setEditing] = useState(null); // a task, 'new', or null
   const [deleting, setDeleting] = useState(null); // the task waiting for delete confirmation
   const [error, setError] = useState('');
@@ -20,7 +21,8 @@ export default function Tasks() {
   const filtersActive = Object.keys(DEFAULTS).some((k) => filters[k] !== DEFAULTS[k]);
 
   const load = useCallback(() => {
-    api.categories().then(setCategories).catch(() => {});
+    api.categories().then((c) => setCategories(c.map((x) => x.name))).catch(() => {});
+    api.tags().then(setTags).catch(() => {});
     return api.list({ ...filters, ...sort }).then(setTasks).catch((e) => setError(e.message));
   }, [filters, sort]);
   useEffect(() => { const id = setTimeout(load, 200); return () => clearTimeout(id); }, [load]);
@@ -57,6 +59,10 @@ export default function Tasks() {
           <option value="">All categories</option>
           {categories.map((c) => <option key={c}>{c}</option>)}
         </select>
+        <select value={filters.tag} onChange={setF('tag')} aria-label="Filter by tag">
+          <option value="">All tags</option>
+          {tags.map((g) => <option key={g} value={g}>#{g}</option>)}
+        </select>
       </div>
 
       <div className="toolbar">
@@ -88,6 +94,7 @@ export default function Tasks() {
                 <span className={`badge s-${t.status}`}>{STATUS[t.status]}</span>
                 <span className="badge"><i className={`dot p-${t.priority}`} />{PRIORITY[t.priority]}</span>
                 {t.category && <span className="badge">{t.category}</span>}
+                {t.tags?.map((g) => <span key={g} className="tag">#{g}</span>)}
                 {t.startDate && <span>Starts {fmt(t.startDate)}</span>}
                 <span className={isOverdue(t) ? 'overdue-text' : ''}>Due {fmt(t.dueDate)}{isOverdue(t) && ' (overdue)'}</span>
                 {t.estimatedMinutes && <span>Est. {fmtDuration(t.estimatedMinutes)}</span>}

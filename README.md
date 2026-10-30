@@ -3,7 +3,7 @@
 ## Run locally
 
 1. Start MongoDB (or use an Atlas URI).
-2. Copy `server/.env.example` to `server/.env` and fill it.
+2. Copy `server/.env.example` to `server/.env` and fill it in.
 3. `npm run install:all`
 4. `npm run dev`: web on http://localhost:5173, API on http://localhost:5000
 
@@ -41,4 +41,6 @@ Task-Tracker-App/
 
 ## API
 
-- `/api/tasks`: list (`q, status, priority, category, dueFrom, dueTo, quick, sort, order`), `/stats`, create, update, delete, `/:id/extend`
+- `/api/auth`: register, login, logout, me, forgot-password, reset-password, profile, password
+- `/api/tasks`: list (`q, status, priority, category, tag, dueFrom, dueTo, quick, sort, order`), `/stats`, `/tags`, create, update, delete, `/:id/extend`
+- `/api/categories`, `/api/health`

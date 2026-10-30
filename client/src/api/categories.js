@@ -1,6 +1,8 @@
-import { request } from "./http.js";
+import { request, post, patch, del } from "./http.js";
 
-// Distinct categories already used on tasks (a managed category list arrives with user accounts)
 export const categoriesApi = {
-  categories: () => request("/tasks/categories"),
+  categories: () => request("/categories"),
+  addCategory: (name) => post("/categories", { name }),
+  renameCategory: (id, name) => patch(`/categories/${id}`, { name }),
+  deleteCategory: (id) => del(`/categories/${id}`),
 };

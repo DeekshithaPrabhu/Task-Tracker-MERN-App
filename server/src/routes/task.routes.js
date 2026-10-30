@@ -5,7 +5,7 @@ const r = Router();
 
 // Fixed paths first, so '/stats' is not read as an :id
 r.get('/stats', task.getStats);
-r.get('/categories', task.getCategories);
+r.get('/tags', task.getTags);
 
 r.get('/', task.listTasks);
 r.post('/', task.createTask);
