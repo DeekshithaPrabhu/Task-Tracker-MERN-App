@@ -45,7 +45,22 @@ export const listTasks = asyncHandler(async (req, res) => {
   const field = SORT_FIELD[sort] || 'dueDate';
   const find = () => Task.find(filter).collation({ locale: 'en' });
   const byPriority = (list) => list.sort((a, b) => (RANK[a.priority] - RANK[b.priority]) * dir);
-  res.json(sort === 'priority' ? byPriority(await find().sort('dueDate')) : await find().sort({ [field]: dir }));
+  const page = parseInt(req.query.page, 10);
+
+  // No page given: return everything as an array (the board needs all tasks)
+  if (!(page > 0)) {
+    return res.json(sort === 'priority' ? byPriority(await find().sort('dueDate')) : await find().sort({ [field]: dir }));
+  }
+
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+  const total = await Task.countDocuments(filter);
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const current = Math.min(page, pages); // e.g. the last page emptied by a delete
+  const skip = (current - 1) * limit;
+  const tasks = sort === 'priority'
+    ? byPriority(await find().sort('dueDate _id')).slice(skip, skip + limit)
+    : await find().sort({ [field]: dir, _id: 1 }).skip(skip).limit(limit); // _id keeps page order stable
+  res.json({ tasks, total, page: current, pages, limit });
 });
 
 export const createTask = asyncHandler(async (req, res) => {

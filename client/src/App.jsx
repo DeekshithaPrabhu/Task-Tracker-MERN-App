@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext.jsx';
 import { Protected, Guest } from '@/routes/guards.jsx';
 import Layout from '@/components/layout/Layout.jsx';
@@ -10,6 +10,7 @@ import Dashboard from '@/pages/Dashboard.jsx';
 import Board from '@/pages/Board.jsx';
 import Tasks from '@/pages/Tasks.jsx';
 import Profile from '@/pages/Profile.jsx';
+import NotFound from '@/pages/NotFound.jsx';
 
 export default function App() {
   return (
@@ -25,7 +26,7 @@ export default function App() {
           <Route path="tasks" element={<Tasks />} />
           <Route path="profile" element={<Profile />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   );

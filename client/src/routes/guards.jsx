@@ -3,9 +3,9 @@ import { useAuth } from '@/context/AuthContext.jsx';
 
 // Only for logged-in users; others go to /login and come back afterwards
 export function Protected({ children }) {
-  const { user, loading } = useAuth(); const loc = useLocation();
+  const { user, loading, expired } = useAuth(); const loc = useLocation();
   if (loading) return <p className="state">Loading…</p>;
-  return user ? children : <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />;
+  return user ? children : <Navigate to="/login" replace state={{ from: loc.pathname + loc.search, expired }} />;
 }
 
 // Only for logged-out users (login, register ...); logged-in users are sent on

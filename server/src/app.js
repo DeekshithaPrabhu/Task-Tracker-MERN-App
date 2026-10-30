@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { corsMiddleware } from './middleware/cors.js';
 import { requireDatabase } from './middleware/requireDatabase.js';
+import { apiNotFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import healthRoutes from './routes/health.routes.js';
 import apiRoutes from './routes/index.js';
@@ -20,6 +21,7 @@ app.use('/api/health', healthRoutes);
 
 // Everything else under /api needs MongoDB
 app.use('/api', requireDatabase, apiRoutes);
+app.use('/api', apiNotFound);
 
 app.use(errorHandler);
 

@@ -39,13 +39,14 @@ Task-Tracker-App/
 
 `@/` in client imports means `client/src/` (for example `import { api } from '@/api'`).
 
-## Deploying the API on Vercel
+## Deploying on Vercel
 
 - **API project:** Root Directory `server`. Env vars: `MONGO_URI`, `JWT_SECRET`, `CLIENT_URL` (your frontend URL).
+- **Web project:** Root Directory `client`. Env var: `VITE_API_URL` (your API URL, no trailing slash, no `/api`).
 - Check the API and database at `https://YOUR-API/api/health?db=1`.
 
 ## API
 
 - `/api/auth`: register, login, logout, me, forgot-password, reset-password, profile, password
-- `/api/tasks`: list (`q, status, priority, category, tag, dueFrom, dueTo, quick, sort, order`), `/stats`, `/tags`, create, `/:id` (get, update, delete), `/:id/extend`, `/bulk`, `/bulk/delete`, `/:id/subtasks`, `/:id/activity`, `/:id/comments`
+- `/api/tasks`: list (`q, status, priority, category, tag, dueFrom, dueTo, quick, sort, order, page, limit`), `/stats`, `/tags`, create, `/:id` (get, update, delete), `/:id/extend`, `/bulk`, `/bulk/delete`, `/:id/subtasks`, `/:id/activity`, `/:id/comments`
 - `/api/categories`, `/api/notifications`, `/api/health`

@@ -6,10 +6,11 @@ import { useForm } from '@/hooks/useForm.js';
 import PasswordField from '@/components/auth/PasswordField.jsx';
 
 export default function Login() {
-  const { login } = useAuth(); const nav = useNavigate(); const loc = useLocation();
+  const { login, expired } = useAuth(); const nav = useNavigate(); const loc = useLocation();
   const f = useForm({ email: '', password: '' }, async (v) => { await login(v); nav(loc.state?.from || '/', { replace: true }); });
   return (
     <AuthCard title="Log in" footer={<>New here? <Link to="/register">Create an account</Link></>}>
+      {expired && <p className="notice" role="alert">Your session expired. Log in again to pick up where you left off.</p>}
       <form className="auth-form" onSubmit={f.onSubmit}>
         <label>Email<input type="email" required autoComplete="username" autoFocus {...f.bind('email')} /></label>
         <PasswordField label="Password" required autoComplete="current-password" {...f.bind('password')} />

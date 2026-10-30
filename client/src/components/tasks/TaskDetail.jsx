@@ -53,7 +53,12 @@ export default function TaskDetail({ id, onClose, onEdit, onChanged }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal detail" role="dialog" aria-label="Task details" onClick={(e) => e.stopPropagation()}>
-        {!task ? <p className={error ? 'err' : 'empty'}>{error || 'Loading…'}</p> : (
+        {!task ? (
+          <div className="stack">
+            <p className={error ? 'err' : 'empty'}>{/not found/i.test(error) ? 'This task could not be found. It may have been deleted.' : error || 'Loading…'}</p>
+            {error && <button className="ghost" onClick={onClose}>Close</button>}
+          </div>
+        ) : (
           <>
             <div className="detail-head">
               <div>
