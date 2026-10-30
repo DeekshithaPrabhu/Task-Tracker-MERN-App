@@ -25,6 +25,10 @@ export const getStats = asyncHandler(async (_req, res) => {
   });
 });
 
+export const listTasks = asyncHandler(async (_req, res) => {
+  res.json(await Task.find().sort('dueDate'));
+});
+
 export const createTask = asyncHandler(async (req, res) => {
   res.status(201).json(await Task.create(pickTaskFields(req.body)));
 });
@@ -45,3 +49,7 @@ export const extendTask = asyncHandler(async (req, res) => {
   res.json(await task.save());
 });
 
+export const deleteTask = asyncHandler(async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
+  res.status(204).end();
+});

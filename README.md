@@ -41,3 +41,4 @@ Task-Tracker-App/
 
 ## API
 - `/api/tasks`: `/stats`, create, update (`PATCH /:id`), `/:id/extend`
+- `GET /api/tasks` (list), `DELETE /api/tasks/:id`

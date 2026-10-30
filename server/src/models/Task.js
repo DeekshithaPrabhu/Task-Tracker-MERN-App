@@ -2,11 +2,19 @@ import mongoose from 'mongoose';
 
 const taskSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
-  priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
+  description: { type: String, default: '' },
+  priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
   status: { type: String, enum: ['todo', 'in-progress', 'done'], default: 'todo' },
+  startDate: Date,
   dueDate: { type: Date, required: true },
+  estimatedMinutes: { type: Number, min: [1, 'Estimate must be at least 1 minute'] },
   completedAt: Date,
 }, { timestamps: true });
+
+taskSchema.pre('validate', function (next) {
+  if (this.startDate && this.dueDate < this.startDate) this.invalidate('dueDate', 'Due date cannot be before the start date');
+  next();
+});
 
 // Keep completedAt in sync with status
 taskSchema.pre('save', function (next) {

@@ -1,7 +1,7 @@
 export const OPEN = { status: { $ne: 'done' } };
 
 // Only these fields can be set from a request (never user or completedAt)
-const FIELDS = ['title', 'priority', 'status', 'dueDate'];
+const FIELDS = ['title', 'description', 'priority', 'status', 'startDate', 'dueDate', 'estimatedMinutes'];
 
 export const pickTaskFields = (body) => {
   const out = {};

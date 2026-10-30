@@ -6,6 +6,7 @@ export default function Layout() {
       <nav className="topnav" aria-label="Main">
         <div className="tabs">
           <NavLink to="/" end>Dashboard</NavLink>
+          <NavLink to="/tasks">All tasks</NavLink>
         </div>
       </nav>
       <Outlet />

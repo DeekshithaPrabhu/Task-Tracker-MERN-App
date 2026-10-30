@@ -49,7 +49,7 @@ export default function Dashboard() {
           <h2>Upcoming this week</h2>
           <ul>{s.upcoming.length ? s.upcoming.map((t) => <TaskRow key={t._id} t={t} onDone={toggle} onExtend={extend} />) : empty('No deadlines in the next 7 days.')}</ul>
         </section>
-        <Breakdown title="By priority" data={s.byPriority} keys={['high', 'medium', 'low']} />
+        <Breakdown title="By priority" data={s.byPriority} keys={['urgent', 'high', 'medium', 'low']} />
         <Breakdown title="By status" data={s.byStatus} keys={['todo', 'in-progress', 'done']} />
         <section className="panel wide">
           <h2>Recently added</h2>

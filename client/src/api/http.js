@@ -8,3 +8,4 @@ export const request = async (path, { body, ...opts } = {}) => {
 const send = (method) => (path, body) => request(path, { method, body });
 export const post = send("POST");
 export const patch = send("PATCH");
+export const del = (path) => request(path, { method: "DELETE" });
